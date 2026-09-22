@@ -1,0 +1,3 @@
+# Predlog (draft): ne indeksirati dok vlasnik ne potvrdi sadržaj.
+User-agent: *
+Disallow: /
