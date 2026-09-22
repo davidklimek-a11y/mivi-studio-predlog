@@ -51,6 +51,44 @@ entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add
 drawings.forEach(function (d) { io.observe(d); });
 }
 }
+var groups = Array.prototype.slice.call(document.querySelectorAll("[data-reveal]"));
+if (groups.length && !reduce && "IntersectionObserver" in window) {
+var compact = window.matchMedia("(max-width: 899px)");
+var LINE = 0.92;
+var place = function (el) {
+if (el.dataset.reveal !== "img") { return; }
+var r = el.getBoundingClientRect();
+var centre = r.left + r.width / 2;
+var middle = Math.abs(centre - window.innerWidth / 2) < window.innerWidth * 0.12;
+if (compact.matches || middle) { el.style.setProperty("--rx", "0px"); el.style.setProperty("--ry", "64px"); }
+else { el.style.setProperty("--rx", (centre < window.innerWidth / 2 ? -96 : 96) + "px"); el.style.setProperty("--ry", "0px"); }
+};
+var armed = [];
+groups.forEach(function (el) {
+if (el.getBoundingClientRect().top < window.innerHeight * LINE) { return; }
+place(el);
+if (el.dataset.reveal === "text") {
+Array.prototype.forEach.call(el.children, function (c, i) { c.style.setProperty("--ri", i); });
+}
+el.classList.add("reveal-armed");
+armed.push(el);
+});
+var watch = new IntersectionObserver(function (entries) {
+entries.forEach(function (en) {
+if (en.isIntersecting) { en.target.classList.add("is-in"); }
+else if (en.boundingClientRect.top > 0) { en.target.classList.remove("is-in"); }
+});
+}, { rootMargin: "0px 0px -8% 0px" });
+armed.forEach(function (el) { watch.observe(el); });
+var settle = function (el) { el.classList.add("is-in"); watch.unobserve(el); };
+document.addEventListener("focusin", function (e) {
+var g = e.target.closest && e.target.closest(".reveal-armed");
+if (g) { settle(g); }
+});
+window.addEventListener("beforeprint", function () { armed.forEach(settle); });
+var onCompact = function () { armed.forEach(function (el) { if (!el.classList.contains("is-in")) { place(el); } }); };
+if (compact.addEventListener) { compact.addEventListener("change", onCompact); }
+}
 var dlg = document.querySelector(".lightbox");
 var triggers = Array.prototype.slice.call(document.querySelectorAll("[data-lb]"));
 if (dlg && triggers.length && typeof dlg.showModal === "function") {
